@@ -22,7 +22,11 @@ async def verify(request: VerifyRequest):
             "identifier": normalized,
             "record": cached["record_data"],
             "warnings": [],
-            "source": {"name": "NAFDAC Greenbook (cached)"},
+            "source": {
+                "name": "NAFDAC Greenbook (cached)",
+                "retrievedAt": datetime.now().isoformat(),
+                "url": "https://greenbook.nafdac.gov.ng/"
+            },
             "cached": True,
             "cache_age_seconds": int((datetime.now() - datetime.fromisoformat(cached["created_at"].replace("Z", "+00:00"))).total_seconds()),
         }
@@ -31,7 +35,6 @@ async def verify(request: VerifyRequest):
     if is_nrn(query):
         record = await query_greenbook_by_nrn(query)
     else:
-        # ✅ FIX: Now actually calls the product name search
         record = await query_greenbook_by_name(query)
 
     if record:
@@ -41,7 +44,11 @@ async def verify(request: VerifyRequest):
             "identifier": normalized,
             "record": record,
             "warnings": [],
-            "source": {"name": "NAFDAC Greenbook"},
+            "source": {
+                "name": "NAFDAC Greenbook",
+                "retrievedAt": datetime.now().isoformat(),
+                "url": "https://greenbook.nafdac.gov.ng/"
+            },
             "cached": False,
             "cache_age_seconds": 0,
         }
@@ -51,7 +58,11 @@ async def verify(request: VerifyRequest):
             "identifier": normalized,
             "record": None,
             "warnings": [],
-            "source": {"name": "NAFDAC Greenbook"},
+            "source": {
+                "name": "NAFDAC Greenbook",
+                "retrievedAt": datetime.now().isoformat(),
+                "url": "https://greenbook.nafdac.gov.ng/"
+            },
             "cached": False,
             "cache_age_seconds": 0,
             "message": "No record found for the provided query.",

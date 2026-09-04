@@ -6,7 +6,11 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 export function useVerify() {
   return useMutation({
     mutationFn: async (query: string) => {
-      const response = await axios.post(`${API_URL}/api/verify`, { query })
+      const response = await axios.post(
+        `${API_URL}/api/verify`,
+        { query },
+        { timeout: 10000 }  // ✅ 10 second timeout
+      )
       return response.data
     },
   })

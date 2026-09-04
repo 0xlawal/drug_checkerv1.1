@@ -1,14 +1,15 @@
 import httpx
 import re
+import logging
 from typing import Optional, Dict, Any
 
+logger = logging.getLogger(__name__)
 GREENBOOK_URL = "https://greenbook.nafdac.gov.ng/"
 
 def normalize_nrn(value: str) -> str:
     return value.strip().replace(" ", "").upper()
 
 def is_nrn(value: str) -> bool:
-    # Check if it looks like a NAFDAC registration number
     pattern = r'^[A-Z0-9]{1,4}[-/][A-Z0-9]{1,4}$'
     return bool(re.match(pattern, value.strip()))
 
@@ -28,10 +29,6 @@ def _map_record(row: dict) -> dict:
     }
 
 async def query_greenbook_by_nrn(nrn: str) -> Optional[Dict[str, Any]]:
-    """
-    Query the NAFDAC Greenbook by NAFDAC registration number.
-    Returns the first matching record or None.
-    """
     normalized = normalize_nrn(nrn)
     params = {
         "draw": "1",
@@ -44,7 +41,6 @@ async def query_greenbook_by_nrn(nrn: str) -> Optional[Dict[str, Any]]:
         "columns[5][search][value]": normalized,
         "columns[5][search][regex]": "false",
     }
-    # Add all column definitions
     columns = [
         "product_name", "ingredient.ingredient_name", "product_category.name",
         "product_category_id", "ingredient.synonym", "NAFDAC",
@@ -69,20 +65,18 @@ async def query_greenbook_by_nrn(nrn: str) -> Optional[Dict[str, Any]]:
             response.raise_for_status()
             data = response.json()
             rows = data.get("data", [])
-            if rows:
-                # Find exact match by NRN
-                for row in rows:
-                    if normalize_nrn(row.get("NAFDAC", "")) == normalized:
-                        return _map_record(row)
+            for row in rows:
+                if normalize_nrn(row.get("NAFDAC", "")) == normalized:
+                    return _map_record(row)
             return None
-        except Exception:
+        except httpx.TimeoutException:
+            logger.error('Greenbook timeout for NRN: %s', nrn)
+            return None
+        except Exception as e:
+            logger.error(f'Greenbook error for NRN {nrn}: {e}', exc_info=True)
             return None
 
 async def query_greenbook_by_name(name: str) -> Optional[Dict[str, Any]]:
-    """
-    Query the NAFDAC Greenbook by product name using the global search.
-    Returns the first matching record or None.
-    """
     params = {
         "draw": "1",
         "start": "0",
@@ -119,5 +113,9 @@ async def query_greenbook_by_name(name: str) -> Optional[Dict[str, Any]]:
             if rows:
                 return _map_record(rows[0])
             return None
-        except Exception:
+        except httpx.TimeoutException:
+            logger.error('Greenbook timeout for name: %s', name)
+            return None
+        except Exception as e:
+            logger.error(f'Greenbook error for name {name}: {e}', exc_info=True)
             return None

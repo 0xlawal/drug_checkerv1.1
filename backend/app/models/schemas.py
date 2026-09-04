@@ -1,8 +1,8 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List
 
 class VerifyRequest(BaseModel):
-    query: str  # Can be NAFDAC number OR product name
+    query: str = Field(..., min_length=1, max_length=200, description="NAFDAC number or product name")
 
 class VerifyResponse(BaseModel):
     state: str
