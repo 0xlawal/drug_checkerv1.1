@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #008751;
+  --gold: #F5A623;
+  --dark: #1A1A2E;
+}
+
+body {
+  @apply bg-gray-50 text-dark antialiased;
+}

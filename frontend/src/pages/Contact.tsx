@@ -1,0 +1,42 @@
+import { useState } from 'react'
+import { Send, CheckCircle2 } from 'lucide-react'
+
+export default function Contact() {
+  const [submitted, setSubmitted] = useState(false)
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setSubmitted(true)
+    setTimeout(() => setSubmitted(false), 3000)
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-16">
+      <h1 className="text-4xl font-bold text-dark mb-6">Contact</h1>
+      {submitted ? (
+        <div className="p-6 bg-green-50 border border-green-200 rounded-2xl flex items-center gap-3 text-green-700">
+          <CheckCircle2 className="h-6 w-6" />
+          <span>Message sent! I'll get back to you soon.</span>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <input type="text" className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input type="email" className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
+            <textarea rows={5} className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition" />
+          </div>
+          <button type="submit" className="w-full bg-primary text-white font-bold py-4 rounded-xl hover:bg-primary/90 transition flex items-center justify-center gap-2">
+            <Send className="h-5 w-5" /> Send Message
+          </button>
+        </form>
+      )}
+    </div>
+  )
+}
