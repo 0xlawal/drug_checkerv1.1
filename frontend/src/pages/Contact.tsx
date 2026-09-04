@@ -37,6 +37,19 @@ export default function Contact() {
           </button>
         </form>
       )}
+
+      <div className="mt-8 grid gap-4 sm:grid-cols-2">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center">
+          <p className="text-sm font-black text-slate-500">Email</p>
+          <a href="mailto:goodnesslawal6@gmail.com" className="text-emerald-700 font-bold hover:underline">
+            goodnesslawal6@gmail.com
+          </a>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center">
+          <p className="text-sm font-black text-slate-500">GitHub</p>
+          <a href="https://github.com/0xlawal" target="_blank" rel="noreferrer" className="text-emerald-700 font-bold hover:underline">0xlawal</a>
+        </div>
+      </div>
     </div>
   )
 }
