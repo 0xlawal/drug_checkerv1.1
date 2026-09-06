@@ -14,12 +14,7 @@ app = FastAPI(
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "https://drug-checker-v1-1.vercel.app",
-        "https://drug-checker.vercel.app",
-        "https://drug-checkerv1-11-tawny.vercel.app",   # <-- ADD YOUR EXACT DOMAIN
-    ],
+    allow_origins=["*"],   # <-- Allow all domains (temporary)
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
