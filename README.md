@@ -2,7 +2,7 @@
 
 A web application that helps users verify NAFDAC registration numbers and product names against Nigeria's official Greenbook database.
 
-Live demo: [https://drug-checker.vercel.app](https://drug-checker.vercel.app)
+Live demo: [https://drug-checker.vercel.app](https://drug-checkerv1-11-tawny.vercel.app/)
 
 ---
 
