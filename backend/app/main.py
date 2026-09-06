@@ -18,6 +18,7 @@ app.add_middleware(
         "http://localhost:5173",
         "https://drug-checker-v1-1.vercel.app",
         "https://drug-checker.vercel.app",
+        "https://drug-checkerv1-11-tawny.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
