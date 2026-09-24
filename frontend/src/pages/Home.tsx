@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   AlertTriangle,
   ArrowUpRight,
@@ -14,10 +14,14 @@ import {
   XCircle,
   List,
   Hash,
+  Copy,
+  Check,
+  Printer,
 } from "lucide-react";
 import { useVerify } from "../hooks/useVerify";
 import HowToUse from "../components/HowToUse";
 import { SearchResultSkeleton } from "../components/Skeleton";
+import RecentLookups, { type RecentLookup } from "../components/RecentLookups";
 
 const DISCLAIMER =
   "This result shows registry information only. It does not certify the physical product as genuine or safe.";
@@ -64,6 +68,17 @@ const resultMeta = {
     tone: "warning",
   },
 } as const;
+
+const RECENT_KEY = "drugchecker:recent-lookups";
+
+function readRecentLookups(): RecentLookup[] {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
+    return Array.isArray(parsed) ? parsed.slice(0, 5) : [];
+  } catch {
+    return [];
+  }
+}
 
 type Tone = (typeof resultMeta)[keyof typeof resultMeta]["tone"];
 
@@ -123,6 +138,8 @@ export default function Home() {
   const [strength, setStrength] = useState("");
   const [showDetails, setShowDetails] = useState(false);
   const [searchMode, setSearchMode] = useState<"nrn" | "name">("nrn");
+  const [recentLookups, setRecentLookups] = useState<RecentLookup[]>([]);
+  const [copied, setCopied] = useState(false);
   const { mutate, data, isLoading, error } = useVerify();
 
   const result = data;
@@ -130,13 +147,41 @@ export default function Home() {
   const tone = meta ? toneClasses(meta.tone) : null;
   const Icon = meta?.icon;
 
+  useEffect(() => setRecentLookups(readRecentLookups()), []);
+
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (searchMode === "nrn" && identifier.trim()) {
-      mutate(identifier.trim());
-    } else if (searchMode === "name" && productName.trim()) {
-      mutate(productName.trim());
-    }
+    const query = searchMode === "nrn" ? identifier.trim() : productName.trim();
+    if (!query) return;
+    mutate(query);
+    const next = [{ query, mode: searchMode, timestamp: Date.now() }, ...recentLookups.filter(item => !(item.query.toLowerCase() === query.toLowerCase() && item.mode === searchMode))].slice(0, 5);
+    setRecentLookups(next);
+    localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+  }
+
+  function selectRecent(item: RecentLookup) {
+    setSearchMode(item.mode);
+    if (item.mode === "nrn") setIdentifier(item.query);
+    else setProductName(item.query);
+    mutate(item.query);
+  }
+
+  async function copyResult() {
+    if (!result) return;
+    const record = result.record;
+    const text = [
+      `DrugChecker lookup: ${result.identifier || "Unknown"}`,
+      `Status: ${meta?.label || "Unknown"}`,
+      record?.productName ? `Product: ${record.productName}` : "",
+      record?.status ? `Registry status: ${record.status}` : "",
+      record?.nafdacNumber ? `NAFDAC number: ${record.nafdacNumber}` : "",
+      `Source: ${result.source?.name || "NAFDAC Greenbook"}`,
+      `Retrieved: ${formatDate(result.source?.retrievedAt)}`,
+      "Registry information is not a safety or authenticity certification.",
+    ].filter(Boolean).join("\n");
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1800);
   }
 
   return (
@@ -169,6 +214,11 @@ export default function Home() {
                   {label as string}
                 </div>
               ))}
+            </div>
+            <div className="mt-8 grid grid-cols-3 border-y border-slate-200 py-4">
+              <div><p className="text-2xl font-black tracking-tight text-slate-950">01</p><p className="mt-1 text-[11px] font-bold uppercase tracking-[0.13em] text-slate-400">Enter</p></div>
+              <div><p className="text-2xl font-black tracking-tight text-slate-950">02</p><p className="mt-1 text-[11px] font-bold uppercase tracking-[0.13em] text-slate-400">Compare</p></div>
+              <div><p className="text-2xl font-black tracking-tight text-slate-950">03</p><p className="mt-1 text-[11px] font-bold uppercase tracking-[0.13em] text-slate-400">Decide</p></div>
             </div>
           </div>
 
@@ -288,6 +338,14 @@ export default function Home() {
           </div>
         </section>
 
+        <div className="mx-auto mt-8 max-w-4xl">
+          <RecentLookups
+            items={recentLookups}
+            onSelect={selectRecent}
+            onClear={() => { setRecentLookups([]); localStorage.removeItem(RECENT_KEY); }}
+          />
+        </div>
+
         {isLoading && <SearchResultSkeleton />}
 
         {error && (
@@ -351,7 +409,11 @@ export default function Home() {
 
             <div className="mt-6 flex flex-col gap-3 border-t border-slate-200/80 pt-5 text-xs text-slate-600 sm:flex-row sm:items-center sm:justify-between">
               <span>Source: {result.source?.name || "NAFDAC Greenbook"} · Retrieved {formatDate(result.source?.retrievedAt)}{result.cached ? ` · Cached ${result.cacheAgeSeconds}s ago` : ""}</span>
-              <a href={result.source?.url || "https://greenbook.nafdac.gov.ng/"} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-black text-emerald-700 hover:text-emerald-900">Open source <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" /></a>
+              <div className="flex flex-wrap items-center gap-3">
+                <button type="button" onClick={copyResult} className="inline-flex items-center gap-1 font-black text-slate-700 hover:text-slate-950">{copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />} {copied ? "Copied" : "Copy result"}</button>
+                <button type="button" onClick={() => window.print()} className="inline-flex items-center gap-1 font-black text-slate-700 hover:text-slate-950"><Printer className="h-3.5 w-3.5" /> Print</button>
+                <a href={result.source?.url || "https://greenbook.nafdac.gov.ng/"} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-black text-emerald-700 hover:text-emerald-900">Open source <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" /></a>
+              </div>
             </div>
           </section>
         )}
